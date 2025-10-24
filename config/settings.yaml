@@ -1,0 +1,8 @@
+ads_receiver_tcp:
+  host: 127.0.0.1
+  port: 4001
+  reconnect_delay: 5.0
+
+ais_sender_tcp:
+  host: 127.0.0.1
+  port: 4002
