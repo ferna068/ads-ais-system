@@ -1,0 +1,5 @@
+aiofiles==25.1.0
+numpy==2.3.4
+pyModeS==2.21.1
+PyYAML==6.0.3
+pyzmq==27.1.0
