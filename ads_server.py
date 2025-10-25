@@ -15,7 +15,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class TCPADSSender:
-    def __init__(self, host: str = '127.0.0.1', port: int = 4001, data_file: str = 'data/ads_data.log'):
+    def __init__(self, host: str = '192.168.0.7', port: int = 4001, data_file: str = 'data/ads_data.log'):
         self.host = host
         self.port = port
         self.data_file = data_file
