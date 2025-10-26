@@ -15,13 +15,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class TCPADSSender:
-    def __init__(self, host: str = '192.168.0.7', port: int = 4001, data_file: str = 'data/ads_data.log'):
+    def __init__(self, host: str = '0.0.0.0', port: int = 4001, data_file: str = 'data/ads_data.log'):
         self.host = host
         self.port = port
         self.data_file = data_file
         self.server = None
         self.clients = set()
-        self.lock = asyncio.Lock()
         logger.info(f"Initialized TCPADSSender with host: {host}, port: {port}")
     
     async def start(self) -> None:
@@ -39,28 +38,31 @@ class TCPADSSender:
     async def connect_client(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         addr = writer.get_extra_info('peername')
         logger.info(f"Connected client: {addr}")
+        self.clients.add(writer)
 
         try:
-            while True:
-                async for data in self.read_datafile():
-                    if not data.strip():
-                        continue
-                    writer.write(data.encode('utf-8'))
-                    await writer.drain()
+            async for data in self.read_datafile():
+                if not data.strip():
+                    continue
+                writer.write(data.encode('utf-8'))
+                await writer.drain()
 
-                    logger.info(f"Sent ADS-B data to client -> {addr} : {data}")
-                    await asyncio.sleep(1)
+                logger.info(f"Sent ADS-B data to client -> {addr} : {data}")
+                await asyncio.sleep(1)
         except (BrokenPipeError, ConnectionResetError):
             logger.warning(f"Client {addr} disconnected")
         except Exception as e:
             logger.error(f"Error in connect_client: {e}")
         finally:
             try:
-                writer.close()
-                await writer.wait_closed()
+                if not writer.is_closing():
+                    writer.close()
+                    await writer.wait_closed()
             except Exception as e:
                 logger.error(f"Error closing writer: {e}")
-            logger.info(f"Disconnected client: {addr}")
+            finally:
+                self.clients.discard(writer)
+                logger.info(f"Disconnected client: {addr}")
 
     async def read_datafile(self) -> AsyncGenerator[str, None]:
         while True:
